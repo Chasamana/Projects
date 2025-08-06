@@ -1,0 +1,168 @@
+
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy import integrate
+
+class polynomial:
+    
+    '''A polynomial function represented by a class'''
+    
+     
+    def __init__(self, Input):
+        
+        '''Constructor for the polynomial class with a list containing integers or floats as input'''
+        
+        
+        '''Checking that the input is indeed a list containing integers or floats and raising an error with an appropriate message if this is not the case'''
+        assert isinstance(Input, list), "Input must be a list"
+        assert all(isinstance(i, (int, float)) for i in Input), "All coefficients must be integers or floats"
+        
+        '''Giving the list a default value of zero if the input list is empty'''
+        if not Input:
+            Input = [0]
+        
+        self.coefficients = Input
+    
+        self.order = len(Input) - 1
+        
+        
+    def __str__(self):
+        
+        '''Method to print the class, prints the order and the polynomial itself'''
+        
+        
+        '''Creating a list representing the polynomial as a string'''
+        terms = [f'{self.coefficients[i]}x^{i}' for i in range(1, self.order+1)]
+        
+        '''Inserting the constant component of the polynomial into the first position of the list'''
+        terms.insert(0, str(self.coefficients[0]))
+        
+        return f"Polynomial of order {self.order}: " + " + ".join(terms) 
+ 
+
+    def __call__(self, Input):
+        
+        '''Creating a method that will add the resepective products of the coeffcients and their function input'''
+        
+        
+        '''Checking that the input is either an integer, float or N-dimensional array and raising an error with an appropriate message if this is not the case'''
+        assert isinstance(Input, (int,float,np.ndarray)), "Input must be an integer, float, or N-dimensional array"
+    
+        coefficientSum = 0 
+        
+        '''Creating a for loop that will progressively add each coefficient of the polynomial to the variable defined above at each iteration'''
+        for i in range(len(self.coefficients)):
+            
+            coefficientSum += self.coefficients[i] * Input ** i
+        
+        return coefficientSum
+    
+   
+    def plot(self, limits=[0,1]):
+        
+        '''Creating a method with one input argument to plot the polynomial in a given interval - the default interval is between 0 and 1'''
+        
+        
+        '''Checking that the input argument is indeed a list of size two containing integers or floats and raising an error with an appropriate message if this is not the case'''
+        assert isinstance(limits, list) and len(limits) == 2 and all(isinstance(i, (int, float)) for i in limits), "Input argument should be a list of size two containing integers or floats"
+        
+        '''Defining points for which we can evaluate the polynomial in a given interval'''
+        x = np.linspace(limits[0], limits[1], 1001)
+        
+        '''Evaluating the value of the points defined above'''
+        y = self(x)
+                
+        plt.plot(x,y, label = 'Polynomial')
+        
+        plt.legend()
+
+        plt.show()
+        
+        
+    def __add__(self, other):
+        
+        '''Method for adding polynomials of all orders and returning the resulting polynomial in a single list'''
+        
+        
+        coefficients1 = self.coefficients.copy()
+        coefficients2 = other.coefficients.copy()
+        
+        '''Determining the difference in the order of the polynomial'''
+        difference = len(coefficients1) - len(coefficients2)
+        
+        '''Adding the appropriate amount of zeros to the respective coefficient list to get them to the same size''' 
+        if difference > 0:
+            for i in range(difference):
+                coefficients2.append(0)
+        elif difference < 0:
+            
+            for i in range(-difference):
+                coefficients1.append(0)
+        
+        '''Adding the coeffcients together that correspond to the same position in their resepctive lists'''
+        Solution = [coefficients1[i] + coefficients2[i] for i in range (len(coefficients1))]
+        
+        return polynomial(Solution) 
+    
+    
+    def derivative(self):
+        
+        '''Method for differentiating the given polynomial'''
+        
+        
+        Derivative =  polynomial([self.coefficients[i] * i for i in range(1, len(self.coefficients))])
+        
+        return Derivative
+    
+    
+    
+def solveEquation():
+    
+    '''Method for solving the given differential equation using odeint'''
+    
+    
+    '''Defining points for which we can evaluate the polynomial in the interval between 0 and 1'''
+    x = np.linspace(0,1,1001)
+    
+    '''Defining the initial condition'''
+    y0 = -1
+    
+    '''Having rearranged for dy/dx solving the differential equation'''
+    y = integrate.odeint(lambda y,x: -y-3*x-2*x**2,y0,x)
+    
+    return x,y
+
+
+def verifySolution(f):
+    
+    '''Method to verify the result returned by the previous method is a solution to the differential equation'''
+    
+    
+    assert type(f) == polynomial, "The provided input argument is not a polynomial"
+    
+    '''Assigning x and y the array of values found from the last method solveEquation'''
+    x,y = solveEquation()
+    
+    '''Evaluating the polynomial f for same array of x values used for solveEquation'''
+    yInput = f(x)
+    
+    plt.plot(np.linspace(0,1,1001),yInput, label = 'f(x)')
+    
+    plt.plot(np.linspace(0,1,1001),y, label = 'solveEquation')
+    
+   
+    plt.xlabel('x')
+    plt.ylabel('y')
+    
+    
+    '''Defining a new function r'''
+    r = f.derivative() + f + polynomial([0,3,2])
+    
+    plt.plot(np.linspace(0,1,1001),r(x), label = 'r(x)')
+    
+    plt.legend()
+
+    plt.show()
+    
+    return r
+     
